@@ -86,6 +86,75 @@ export class VFSCommands {
     return target.content || '';
   }
 
+  async cp(srcPath: string, destPath: string): Promise<void> {
+    const srcNode = await resolvePath(srcPath, this.cwdId);
+    if (!srcNode) throw new Error(`cp: cannot stat '${srcPath}': No such file or directory`);
+    
+    if (srcNode.type === 'directory') throw new Error(`cp: -r not specified; omitting directory '${srcPath}'`);
+
+    const destParts = destPath.split('/');
+    const destName = destParts.pop()!;
+    const destParentPath = destParts.join('/') || (destPath.startsWith('/') ? '/' : '.');
+    
+    let destParent = await resolvePath(destParentPath, this.cwdId);
+    if (!destParent) throw new Error(`cp: cannot create regular file '${destPath}': No such file or directory`);
+    
+    let finalDestParentId = destParent.id;
+    let finalDestName = destName;
+
+    const existingDest = await resolvePath(destPath, this.cwdId);
+    if (existingDest && existingDest.type === 'directory') {
+      finalDestParentId = existingDest.id;
+      finalDestName = srcNode.name;
+    }
+
+    const existingFile = await vfsCore.getChildByName(finalDestParentId, finalDestName);
+    if (existingFile) {
+      if (existingFile.type === 'directory') throw new Error(`cp: cannot overwrite directory '${finalDestName}' with non-directory`);
+      await vfsCore.updateNode(existingFile.id, { content: srcNode.content });
+    } else {
+      await vfsCore.createNode({
+        name: finalDestName,
+        type: 'file',
+        parentId: finalDestParentId,
+        content: srcNode.content,
+      });
+    }
+  }
+
+  async mv(srcPath: string, destPath: string): Promise<void> {
+    const srcNode = await resolvePath(srcPath, this.cwdId);
+    if (!srcNode) throw new Error(`mv: cannot stat '${srcPath}': No such file or directory`);
+    if (srcNode.id === 'root') throw new Error(`mv: cannot move root`);
+
+    const destParts = destPath.split('/');
+    const destName = destParts.pop()!;
+    const destParentPath = destParts.join('/') || (destPath.startsWith('/') ? '/' : '.');
+    
+    let destParent = await resolvePath(destParentPath, this.cwdId);
+    if (!destParent) throw new Error(`mv: cannot move to '${destPath}': No such file or directory`);
+
+    let finalDestParentId = destParent.id;
+    let finalDestName = destName;
+
+    const existingDest = await resolvePath(destPath, this.cwdId);
+    if (existingDest && existingDest.type === 'directory') {
+      finalDestParentId = existingDest.id;
+      finalDestName = srcNode.name;
+    }
+
+    const existingFile = await vfsCore.getChildByName(finalDestParentId, finalDestName);
+    if (existingFile) {
+      if (existingFile.id === srcNode.id) return;
+      if (existingFile.type === 'directory' && srcNode.type !== 'directory') throw new Error(`mv: cannot overwrite directory '${finalDestName}' with non-directory`);
+      if (existingFile.type !== 'directory' && srcNode.type === 'directory') throw new Error(`mv: cannot overwrite non-directory '${finalDestName}' with directory`);
+      
+      await vfsCore.deleteNode(existingFile.id);
+    }
+
+    await vfsCore.updateNode(srcNode.id, { name: finalDestName, parentId: finalDestParentId });
+  }
+
   async writeFile(path: string, content: string): Promise<void> {
     const parts = path.split('/');
     const name = parts.pop()!;

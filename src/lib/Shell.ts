@@ -69,6 +69,14 @@ export class Shell {
           if (!args[1]) throw new Error("missing operand");
           await this.vfs.rm(args[1]);
           break;
+        case "cp":
+          if (!args[1] || !args[2]) throw new Error("missing file operand");
+          await this.vfs.cp(args[1], args[2]);
+          break;
+        case "mv":
+          if (!args[1] || !args[2]) throw new Error("missing file operand");
+          await this.vfs.mv(args[1], args[2]);
+          break;
         case "cat":
           if (!args[1]) throw new Error("missing operand");
           output = await this.vfs.cat(args[1]);
@@ -85,7 +93,7 @@ export class Shell {
           output = this.env.USER;
           break;
         case "help":
-          output = "Available commands: ls, cd, pwd, mkdir, touch, rm, cat, echo, whoami, clear, help\nRedirection: > (write), >> (append)";
+          output = "Available commands: ls, cd, pwd, mkdir, touch, rm, cp, mv, cat, echo, whoami, clear, help\nRedirection: > (write), >> (append)";
           break;
         default:
           output = `command not found: ${cmd}`;
