@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { TerminalComponent } from "./components/Terminal";
 import { FileExplorer } from "./components/FileExplorer";
+import { useLessons } from "./engine/useLessons";
 import {
   BookOpen,
   CheckCircle,
@@ -8,12 +9,14 @@ import {
   Zap,
   Sparkles,
   Menu,
-  X
+  X,
+  RotateCcw
 } from "lucide-react";
 
 export default function App() {
   const [showSidebar, setShowSidebar] = useState(false);
   const [vfsRefreshTrigger, setVfsRefreshTrigger] = useState(0);
+  const { lessons, activeLessonId, setActiveLessonId, completedTasks, checkCommand, resetProgress } = useLessons();
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-gray-200 font-sans flex flex-col">
@@ -60,104 +63,78 @@ export default function App() {
           transition-transform duration-300 ease-in-out
           ${showSidebar ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
         `}>
-          <div className="p-5 border-b border-white/5">
+          <div className="p-5 border-b border-white/5 flex items-center justify-between">
             <h2 className="text-sm font-bold uppercase tracking-wider text-gray-500 flex items-center">
               <BookOpen size={16} className="mr-2" />
               Learning Path
             </h2>
+            <button 
+              onClick={resetProgress}
+              className="text-gray-500 hover:text-white transition-colors"
+              title="Reset Progress"
+            >
+              <RotateCcw size={14} />
+            </button>
           </div>
 
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
-            {/* Lesson 1 */}
-            <div className="bg-[#1a1a1a] border border-white/5 rounded-xl p-4 transition-all hover:border-indigo-500/30">
-              <div className="flex items-start justify-between mb-2">
-                <h3 className="font-semibold text-white">1. Điều hướng & Khám phá</h3>
-                <div className="px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-400 text-[10px] font-bold uppercase tracking-wide">Bắt đầu</div>
-              </div>
-              <p className="text-sm text-gray-400 mb-3">Làm quen với không gian làm việc của bạn bằng các lệnh cơ bản nhất.</p>
-              <div className="space-y-3">
-                <div className="bg-[#111] p-2 rounded border border-white/5">
-                  <div className="text-xs text-gray-300 mb-1 font-medium">1. Xem thư mục hiện tại:</div>
-                  <code className="text-indigo-400 bg-indigo-400/10 px-1.5 py-0.5 rounded text-xs font-mono">pwd</code>
-                </div>
-                <div className="bg-[#111] p-2 rounded border border-white/5">
-                  <div className="text-xs text-gray-300 mb-1 font-medium">2. Liệt kê các tệp tin:</div>
-                  <code className="text-indigo-400 bg-indigo-400/10 px-1.5 py-0.5 rounded text-xs font-mono">ls</code>
-                </div>
-                <div className="bg-[#111] p-2 rounded border border-white/5">
-                  <div className="text-xs text-gray-300 mb-1 font-medium">3. Di chuyển về thư mục gốc:</div>
-                  <code className="text-indigo-400 bg-indigo-400/10 px-1.5 py-0.5 rounded text-xs font-mono">cd /</code>
-                </div>
-              </div>
-            </div>
+            {lessons.map((lesson, index) => {
+              const isActive = lesson.id === activeLessonId;
+              const isCompleted = lesson.tasks.every(t => completedTasks.has(t.id));
 
-            {/* Lesson 2 */}
-            <div className="bg-[#1a1a1a] border border-white/5 rounded-xl p-4 transition-all hover:border-indigo-500/30">
-              <div className="flex items-start justify-between mb-2">
-                <h3 className="font-semibold text-white">2. Quản lý Tệp & Thư mục</h3>
-              </div>
-              <p className="text-sm text-gray-400 mb-3">Tạo và tổ chức không gian làm việc của bạn.</p>
-              <div className="space-y-3">
-                <div className="bg-[#111] p-2 rounded border border-white/5">
-                  <div className="text-xs text-gray-300 mb-1 font-medium">1. Tạo thư mục mới:</div>
-                  <code className="text-indigo-400 bg-indigo-400/10 px-1.5 py-0.5 rounded text-xs font-mono">mkdir workspace</code>
-                </div>
-                <div className="bg-[#111] p-2 rounded border border-white/5">
-                  <div className="text-xs text-gray-300 mb-1 font-medium">2. Đi vào thư mục vừa tạo:</div>
-                  <code className="text-indigo-400 bg-indigo-400/10 px-1.5 py-0.5 rounded text-xs font-mono">cd workspace</code>
-                </div>
-                <div className="bg-[#111] p-2 rounded border border-white/5">
-                  <div className="text-xs text-gray-300 mb-1 font-medium">3. Tạo một tệp tin trống:</div>
-                  <code className="text-indigo-400 bg-indigo-400/10 px-1.5 py-0.5 rounded text-xs font-mono">touch notes.txt</code>
-                </div>
-              </div>
-            </div>
-
-            {/* Lesson 3 */}
-            <div className="bg-[#1a1a1a] border border-white/5 rounded-xl p-4 transition-all hover:border-indigo-500/30">
-              <div className="flex items-start justify-between mb-2">
-                <h3 className="font-semibold text-white">3. Xem & Xóa Dữ liệu</h3>
-              </div>
-              <p className="text-sm text-gray-400 mb-3">Thao tác trực tiếp với nội dung của tệp tin.</p>
-              <div className="space-y-3">
-                <div className="bg-[#111] p-2 rounded border border-white/5">
-                  <div className="text-xs text-gray-300 mb-1 font-medium">1. Xem nội dung tệp (quay lại home trước):</div>
-                  <div className="flex flex-col space-y-1">
-                    <code className="text-indigo-400 bg-indigo-400/10 px-1.5 py-0.5 rounded text-xs font-mono w-fit">cd /home/user</code>
-                    <code className="text-indigo-400 bg-indigo-400/10 px-1.5 py-0.5 rounded text-xs font-mono w-fit">cat readme.txt</code>
+              return (
+                <div 
+                  key={lesson.id}
+                  onClick={() => setActiveLessonId(lesson.id)}
+                  className={`
+                    border rounded-xl p-4 transition-all cursor-pointer relative overflow-hidden
+                    ${isActive 
+                      ? 'bg-[#1a1a1a] border-indigo-500/50 shadow-[0_0_15px_rgba(99,102,241,0.1)]' 
+                      : 'bg-[#1a1a1a] border-white/5 hover:border-indigo-500/30 opacity-60 hover:opacity-100'
+                    }
+                  `}
+                >
+                  {isActive && <div className="absolute top-0 left-0 w-1 h-full bg-indigo-500"></div>}
+                  
+                  <div className="flex items-start justify-between mb-2">
+                    <h3 className="font-semibold text-white">{lesson.title}</h3>
+                    {isCompleted ? (
+                      <CheckCircle size={18} className="text-emerald-500" />
+                    ) : isActive ? (
+                      <div className="px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-400 text-[10px] font-bold uppercase tracking-wide">
+                        Active
+                      </div>
+                    ) : null}
                   </div>
+                  <p className="text-sm text-gray-400 mb-3">{lesson.description}</p>
+                  
+                  {isActive && (
+                    <div className="space-y-3">
+                      {lesson.tasks.map((task, i) => {
+                        const taskCompleted = completedTasks.has(task.id);
+                        return (
+                          <div key={task.id} className={`bg-[#111] p-2 rounded border ${taskCompleted ? 'border-emerald-500/30' : 'border-white/5'}`}>
+                            <div className="flex items-center text-xs mb-1 font-medium">
+                              <div className={`w-4 h-4 rounded border flex items-center justify-center mr-2 ${taskCompleted ? 'bg-emerald-500/20 border-emerald-500 text-emerald-500' : 'border-gray-600 text-transparent'}`}>
+                                {taskCompleted && <CheckCircle size={10} />}
+                              </div>
+                              <span className={taskCompleted ? 'text-gray-500 line-through' : 'text-gray-300'}>
+                                {i + 1}. {task.description}
+                              </span>
+                            </div>
+                            {!taskCompleted && (
+                              <code className="ml-6 text-indigo-400 bg-indigo-400/10 px-1.5 py-0.5 rounded text-xs font-mono">
+                                {task.commandHint}
+                              </code>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
-                <div className="bg-[#111] p-2 rounded border border-white/5">
-                  <div className="text-xs text-gray-300 mb-1 font-medium">2. Xóa tệp tin đã tạo:</div>
-                  <div className="flex flex-col space-y-1">
-                    <code className="text-indigo-400 bg-indigo-400/10 px-1.5 py-0.5 rounded text-xs font-mono w-fit">cd workspace</code>
-                    <code className="text-indigo-400 bg-indigo-400/10 px-1.5 py-0.5 rounded text-xs font-mono w-fit">rm notes.txt</code>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Lesson 4 */}
-            <div className="bg-[#1a1a1a] border border-white/5 rounded-xl p-4 transition-all hover:border-indigo-500/30">
-              <div className="flex items-start justify-between mb-2">
-                <h3 className="font-semibold text-white">4. Tiện ích Hệ thống</h3>
-              </div>
-              <p className="text-sm text-gray-400 mb-3">Các lệnh hữu ích trong quá trình làm việc.</p>
-              <div className="space-y-3">
-                <div className="bg-[#111] p-2 rounded border border-white/5">
-                  <div className="text-xs text-gray-300 mb-1 font-medium">1. In một chuỗi ra màn hình:</div>
-                  <code className="text-indigo-400 bg-indigo-400/10 px-1.5 py-0.5 rounded text-xs font-mono">echo "Hello CLI"</code>
-                </div>
-                <div className="bg-[#111] p-2 rounded border border-white/5">
-                  <div className="text-xs text-gray-300 mb-1 font-medium">2. Xem tên người dùng hiện tại:</div>
-                  <code className="text-indigo-400 bg-indigo-400/10 px-1.5 py-0.5 rounded text-xs font-mono">whoami</code>
-                </div>
-                <div className="bg-[#111] p-2 rounded border border-white/5">
-                  <div className="text-xs text-gray-300 mb-1 font-medium">3. Xóa sạch màn hình terminal:</div>
-                  <code className="text-indigo-400 bg-indigo-400/10 px-1.5 py-0.5 rounded text-xs font-mono">clear</code>
-                </div>
-              </div>
-            </div>
+              );
+            })}
           </div>
 
           <div className="p-4 border-t border-white/5 bg-[#0a0a0a]">
@@ -186,7 +163,10 @@ export default function App() {
         <section className="flex-1 p-2 md:p-6 bg-[#050505] flex flex-col w-full">
           <div className="flex-1 min-h-0 flex flex-col lg:flex-row gap-4">
             <div className="flex-1 min-h-0">
-              <TerminalComponent onCommandExecuted={() => setVfsRefreshTrigger(prev => prev + 1)} />
+              <TerminalComponent 
+                onCommandExecuted={() => setVfsRefreshTrigger(prev => prev + 1)}
+                onCommandParsed={checkCommand}
+              />
             </div>
             <div className="w-full lg:w-72 h-64 lg:h-full shrink-0">
               <FileExplorer refreshTrigger={vfsRefreshTrigger} />

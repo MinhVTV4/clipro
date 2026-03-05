@@ -32,7 +32,13 @@ const AVAILABLE_COMMANDS = [
   "help",
 ];
 
-export function TerminalComponent({ onCommandExecuted }: { onCommandExecuted?: () => void }) {
+export function TerminalComponent({ 
+  onCommandExecuted,
+  onCommandParsed
+}: { 
+  onCommandExecuted?: () => void;
+  onCommandParsed?: (cmd: string, vfs: any) => void;
+}) {
   const terminalRef = useRef<HTMLDivElement>(null);
   const xtermRef = useRef<XTerm | null>(null);
   const fitAddonRef = useRef<FitAddon | null>(null);
@@ -177,6 +183,7 @@ export function TerminalComponent({ onCommandExecuted }: { onCommandExecuted?: (
             }
             setHistory((prev) => [...prev, cmd]);
             if (onCommandExecuted) onCommandExecuted();
+            if (onCommandParsed) onCommandParsed(cmd, shell.vfs);
           }
           currentLineRef.current = "";
           setInput("");
