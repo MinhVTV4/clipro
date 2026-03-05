@@ -94,7 +94,7 @@ export const lessons: Lesson[] = [
   {
     id: 'intermediate-training',
     title: 'Thao Tác Trung Bình',
-    description: 'Học cách sao chép (cp), di chuyển/đổi tên (mv) và nối thêm dữ liệu (>>) vào tệp tin.',
+    description: 'Học cách sao chép (cp), di chuyển/đổi tên (mv), nối thêm dữ liệu (>>) và quản lý cấu trúc thư mục.',
     tasks: [
       {
         id: 'cd-home',
@@ -103,6 +103,17 @@ export const lessons: Lesson[] = [
         verify: async (vfs, cmd) => {
           const pwd = await vfs.pwd();
           return pwd === '/home/user';
+        }
+      },
+      {
+        id: 'mkdir-config',
+        description: 'Tạo một thư mục tên là "project_config".',
+        commandHint: 'mkdir project_config',
+        verify: async (vfs, cmd) => {
+          try {
+            const items = await vfs.ls('.');
+            return items.includes('project_config');
+          } catch { return false; }
         }
       },
       {
@@ -117,6 +128,23 @@ export const lessons: Lesson[] = [
         }
       },
       {
+        id: 'append-config',
+        description: 'Nối thêm dòng "ENV=production" vào cuối tệp config.txt.',
+        commandHint: 'echo "ENV=production" >> config.txt',
+        verify: async (vfs, cmd) => {
+          try {
+            const content = await vfs.cat('config.txt');
+            return content.includes('PORT=8080') && content.includes('ENV=production');
+          } catch { return false; }
+        }
+      },
+      {
+        id: 'cat-config',
+        description: 'Kiểm tra lại nội dung của tệp config.txt.',
+        commandHint: 'cat config.txt',
+        verify: async (vfs, cmd) => cmd.trim().startsWith('cat config.txt')
+      },
+      {
         id: 'cp-config',
         description: 'Sao chép tệp config.txt thành config.backup.',
         commandHint: 'cp config.txt config.backup',
@@ -128,7 +156,7 @@ export const lessons: Lesson[] = [
         }
       },
       {
-        id: 'mv-config',
+        id: 'mv-config-rename',
         description: 'Đổi tên tệp config.backup thành backup.txt.',
         commandHint: 'mv config.backup backup.txt',
         verify: async (vfs, cmd) => {
@@ -139,13 +167,30 @@ export const lessons: Lesson[] = [
         }
       },
       {
-        id: 'append-config',
-        description: 'Nối thêm dòng "ENV=production" vào cuối tệp config.txt.',
-        commandHint: 'echo "ENV=production" >> config.txt',
+        id: 'mv-config-move',
+        description: 'Di chuyển tệp config.txt vào trong thư mục project_config.',
+        commandHint: 'mv config.txt project_config',
         verify: async (vfs, cmd) => {
           try {
-            const content = await vfs.cat('config.txt');
-            return content.includes('PORT=8080') && content.includes('ENV=production');
+            const items = await vfs.ls('project_config');
+            return items.includes('config.txt');
+          } catch { return false; }
+        }
+      },
+      {
+        id: 'ls-config',
+        description: 'Liệt kê nội dung bên trong thư mục project_config để kiểm tra.',
+        commandHint: 'ls project_config',
+        verify: async (vfs, cmd) => cmd.trim() === 'ls project_config' || cmd.trim() === 'ls project_config/'
+      },
+      {
+        id: 'rm-backup',
+        description: 'Xóa tệp backup.txt vì không còn cần thiết.',
+        commandHint: 'rm backup.txt',
+        verify: async (vfs, cmd) => {
+          try {
+            const items = await vfs.ls('.');
+            return !items.includes('backup.txt');
           } catch { return false; }
         }
       }
@@ -154,27 +199,45 @@ export const lessons: Lesson[] = [
   {
     id: 'advanced-training',
     title: 'Thao Tác Nâng Cao',
-    description: 'Xây dựng cấu trúc thư mục phức tạp và di chuyển tệp tin giữa các thư mục.',
+    description: 'Xây dựng cấu trúc dự án phức tạp, thao tác với đường dẫn tương đối và quản lý tệp tin hàng loạt.',
     tasks: [
       {
-        id: 'mkdir-src',
+        id: 'cd-home-adv',
+        description: 'Đảm bảo bạn đang ở thư mục /home/user.',
+        commandHint: 'cd /home/user',
+        verify: async (vfs, cmd) => {
+          const pwd = await vfs.pwd();
+          return pwd === '/home/user';
+        }
+      },
+      {
+        id: 'mkdir-app',
+        description: 'Tạo thư mục "app_build".',
+        commandHint: 'mkdir app_build',
+        verify: async (vfs, cmd) => {
+          try {
+            const items = await vfs.ls('.');
+            return items.includes('app_build');
+          } catch { return false; }
+        }
+      },
+      {
+        id: 'cd-app',
+        description: 'Di chuyển vào thư mục "app_build".',
+        commandHint: 'cd app_build',
+        verify: async (vfs, cmd) => {
+          const pwd = await vfs.pwd();
+          return pwd.endsWith('/app_build');
+        }
+      },
+      {
+        id: 'mkdir-src-dist',
         description: 'Tạo thư mục "src".',
         commandHint: 'mkdir src',
         verify: async (vfs, cmd) => {
           try {
             const items = await vfs.ls('.');
             return items.includes('src');
-          } catch { return false; }
-        }
-      },
-      {
-        id: 'touch-index',
-        description: 'Tạo tệp index.js bên trong thư mục src chứa nội dung "console.log(\'Hello\')".',
-        commandHint: 'echo "console.log(\'Hello\')" > src/index.js',
-        verify: async (vfs, cmd) => {
-          try {
-            const content = await vfs.cat('src/index.js');
-            return content.includes('console.log');
           } catch { return false; }
         }
       },
@@ -190,19 +253,52 @@ export const lessons: Lesson[] = [
         }
       },
       {
-        id: 'cp-index',
-        description: 'Sao chép tệp index.js từ thư mục src sang thư mục dist.',
-        commandHint: 'cp src/index.js dist/index.js',
+        id: 'touch-main',
+        description: 'Tạo tệp main.js trong thư mục src với nội dung "console.log(\'main\')".',
+        commandHint: 'echo "console.log(\'main\')" > src/main.js',
         verify: async (vfs, cmd) => {
           try {
-            const content = await vfs.cat('dist/index.js');
-            return content.includes('console.log');
+            const content = await vfs.cat('src/main.js');
+            return content.includes('main');
+          } catch { return false; }
+        }
+      },
+      {
+        id: 'touch-utils',
+        description: 'Tạo tệp utils.js trong thư mục src với nội dung "console.log(\'utils\')".',
+        commandHint: 'echo "console.log(\'utils\')" > src/utils.js',
+        verify: async (vfs, cmd) => {
+          try {
+            const content = await vfs.cat('src/utils.js');
+            return content.includes('utils');
+          } catch { return false; }
+        }
+      },
+      {
+        id: 'cp-main-dist',
+        description: 'Sao chép tệp main.js từ src sang dist.',
+        commandHint: 'cp src/main.js dist/',
+        verify: async (vfs, cmd) => {
+          try {
+            const content = await vfs.cat('dist/main.js');
+            return content.includes('main');
+          } catch { return false; }
+        }
+      },
+      {
+        id: 'mv-utils-dist',
+        description: 'Di chuyển và đổi tên tệp utils.js từ src sang dist thành helper.js.',
+        commandHint: 'mv src/utils.js dist/helper.js',
+        verify: async (vfs, cmd) => {
+          try {
+            const content = await vfs.cat('dist/helper.js');
+            return content.includes('utils');
           } catch { return false; }
         }
       },
       {
         id: 'rm-src',
-        description: 'Xóa toàn bộ thư mục src.',
+        description: 'Xóa toàn bộ thư mục src (lệnh rm của chúng ta hỗ trợ xóa đệ quy thư mục).',
         commandHint: 'rm src',
         verify: async (vfs, cmd) => {
           try {
